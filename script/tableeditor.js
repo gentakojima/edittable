@@ -13,15 +13,15 @@
  * @author Adrian Lang <lang@cosmocode.de>
  */
 
-addInitEvent(function () {
-    var table = getElementsByClass('edit', document, 'table')[0];
+jQuery(function () {
+    var table = jQuery("table.edit").get(0);
     if (!table) {
         // There is no table editor.
         return;
     }
-    initSizeCtl('size__ctl','edit__wrap');
-    var tbody = table.getElementsByTagName('tbody')[0];
-    prependChild(table, document.createElement('thead'));
+    dw_editor.initSizeCtl('size__ctl','edit__wrap');
+    var tbody = jQuery(table).find('tbody').get(0);
+    jQuery(document.createElement('thead')).prependTo(table);
 
     // The currently selected table field
     var cur_field = null;
@@ -36,11 +36,11 @@ addInitEvent(function () {
         }
         cur_field = newcur;
         lastChildElement.call(cur_field).focus();
-        if ($('table__cur_field')) {
-            $('table__cur_field').id = '';
+        if (jQuery('table__cur_field')) {
+            jQuery('table__cur_field').id = '';
         }
         lastChildElement.call(cur_field).id = 'table__cur_field';
-        linkwiz.textArea = lastChildElement.call(cur_field);
+        dw_linkwiz.textArea = lastChildElement.call(cur_field);
         for (var i = 0 ; i < setCurrentField._handlers.length ; ++i) {
             setCurrentField._handlers[i].call(cur_field);
         }
@@ -522,7 +522,7 @@ addInitEvent(function () {
      */
     // Attaches focus handlers and methods to a cell.
     function pimp() {
-        addEvent(lastChildElement.call(this), 'focus', function() { return setCurrentField(this.parentNode); });
+        jQuery(lastChildElement.call(this)).focus(function() { return setCurrentField(this.parentNode); });
 
         this.nextCell = function () {
             var nextcell = this;
@@ -535,7 +535,7 @@ addInitEvent(function () {
 
         this.getInpObj = function (name) {
             var tname = lastChildElement.call(this).name.replace('text', name);
-            var inputs = this.getElementsByTagName('input');
+            var inputs = jQuery(this).find('input');
             for (var i = 0 ; i < inputs.length ; ++i) {
                 if (inputs[i].name === tname) {
                     return inputs[i];
@@ -800,7 +800,7 @@ addInitEvent(function () {
      */
     function prepareButton(button, click_handler, update_handler) {
         // Click handler
-        addEvent(button, 'click', function () {
+        jQuery(button).click(function () {
             var nextcur = cur_field ? click_handler() :
                           tbody.rows[0].cells[1];
             if (!nextcur) {
@@ -927,7 +927,7 @@ addInitEvent(function () {
     };
     var table_toolbar = document.createElement('div');
     table_toolbar.id = 'tool__bar_table';
-    $('tool__bar').parentNode.insertBefore(table_toolbar, $('tool__bar'));
+    jQuery('#tool__bar').get(0).parentNode.insertBefore(table_toolbar, jQuery('#tool__bar').get(0));
     initToolbar('tool__bar_table', 'dw__editform', window.table_toolbar);
 
     setCurrentField(tbody.rows[0].cells[0]);
@@ -952,7 +952,7 @@ addInitEvent(function () {
         if (topright) add('dragmarker_topright');
         if (bottomright) add('dragmarker_bottomright');
         if (bottomleft) add('dragmarker_bottomleft');
-        prependChild(target, drag_marker);
+        jQuery(drag_marker).prependTo(target);
     };
 
     /**
@@ -1053,7 +1053,7 @@ addInitEvent(function () {
             // Move marker
             var rowhandle = hasClass(this.obj, 'rowhandle');
             if (rowhandle) {
-                var pos = findRow(e.pageY + $('edit__wrap').scrollTop);
+                var pos = findRow(e.pageY + jQuery('edit__wrap').scrollTop);
                 if (pos > 0) {
                     target = table.rows[pos].cells[0];
                 }
@@ -1156,7 +1156,10 @@ addInitEvent(function () {
         handle.innerHTML = '&nbsp;';
         handle.className = 'handle ' + text + 'handle';
 
-        (new TableEditorDrag()).attach(handle);
+        // (new TableEditorDrag()).attach(handle); 
+	// FIXME Feature disabled because bug on Firefox that prevents Jquery draggable() from working
+        // FIXME This line should be: jQuery(new TableEditorDrag()).draggable({"handle":handle.className});
+	// FIXME Original line left as is for reference
         var dropdown = document.createElement('span');
         dropdown.className = 'handle_dropdown';
         var dropbuttn = document.createElement('img');
@@ -1200,7 +1203,7 @@ addInitEvent(function () {
             var b = document.createElement('li');
             b.appendChild(document.createElement('a'));
             b.firstChild.innerHTML = LANG.plugins.edittable['struct_' + text + '_' + items[item][0]];
-            addEvent(b.firstChild, 'click', bind(function (c) {
+            jQuery(b.firstChild).click(bind(function (c) {
                              dropcontent.style.display = 'none'; c(); }, items[item][1]));
             dropcontent.firstChild.appendChild(b);
         }
@@ -1211,7 +1214,7 @@ addInitEvent(function () {
         if (handles_done) updateHandleState(handle);
     }
 
-    addEvent(document.body, 'mousedown', function (e) {
+    jQuery(document.body).mousedown(function (e) {
         // Check if we are in a dropdown
         var tgt = e.target;
         while (tgt && !hasClass(tgt, 'handle_dropdown')) {
@@ -1227,7 +1230,7 @@ addInitEvent(function () {
         }
 
         // Hide all dropdowns
-        var dropdowns = getElementsByClass('handle_dropdown', $('dw__editform'), 'span');
+        var dropdowns = jQuery(jQuery('#dw__editform')).find('span.handle_dropdown');
         for (var drop = 0 ; drop < dropdowns.length ; ++drop) {
             dropdowns[drop].lastChild.style.display = 'none';
         }
@@ -1245,7 +1248,7 @@ addInitEvent(function () {
     }
     var nullhandle = document.createElement('TD');
     nullhandle.className = 'handle nullhandle';
-    prependChild(newrow, nullhandle);
+    jQuery(nullhandle).prependTo(newrow);
 
     table.forEveryRow(function () {
         addHandle.call(this, 'row', this.firstChild);
@@ -1253,21 +1256,21 @@ addInitEvent(function () {
     handles_done = true;
 
     function updateHandlesState () {
-        var handles = getElementsByClass('handle', table, 'td');
+        var handles = jQuery(table).find("td.handle");
         for (var handle = 0 ; handle < handles.length ; ++handle) {
             updateHandleState(handles[handle]);
         }
     }
 
-    var buttons = $('tool__bar').getElementsByTagName('button');
+    var buttons = jQuery(jQuery('#tool__bar')).find('button');
     for (var i = 0 ; i < buttons.length ; ++i) {
-        addEvent(buttons[i], 'click', updateHandlesState);
+        jQuery(buttons[i]).click(updateHandlesState);
     }
 
     updateHandlesState();
 
     setCurrentField._handlers.push(function () {
-        var handles = getElementsByClass('handle', table, 'td');
+        var handles = jQuery(table).find("td.handle");
         for (var handle = 0 ; handle < handles.length ; ++handle) {
             removeClass(handles[handle], 'curhandle');
         }
@@ -1283,29 +1286,29 @@ addInitEvent(function () {
 
     // Fix lock timer
 
-    locktimer.init = function(timeout,msg,draft){
+    dw_locktimer.init = function(timeout,msg,draft){
         // init values
-        locktimer.timeout  = timeout*1000;
-        locktimer.msg      = msg;
-        locktimer.draft    = draft;
-        locktimer.lasttime = new Date();
+        dw_locktimer.timeout  = timeout*1000;
+        dw_locktimer.msg      = msg;
+        dw_locktimer.draft    = draft;
+        dw_locktimer.lasttime = new Date();
 
-        if(!$('dw__editform')) return;
-        locktimer.pageid = $('dw__editform').elements.id.value;
-        if(!locktimer.pageid) return;
+        if(!jQuery('#dw__editform')) return;
+        dw_locktimer.pageid = jQuery('#dw__editform').get(0).elements.id.value;
+        if(!dw_locktimer.pageid) return;
 
         // init ajax component
-        locktimer.sack = new sack(DOKU_BASE + 'lib/exe/ajax.php');
-        locktimer.sack.AjaxFailedAlert = '';
-        locktimer.sack.encodeURIString = false;
-        locktimer.sack.onCompletion = locktimer.refreshed;
+        dw_locktimer.sack = new sack(DOKU_BASE + 'lib/exe/ajax.php');
+        dw_locktimer.sack.AjaxFailedAlert = '';
+        dw_locktimer.sack.encodeURIString = false;
+        dw_locktimer.sack.onCompletion = dw_locktimer.refreshed;
 
         // register refresh event
-        addEvent($('dw__editform'),'keypress',function(){locktimer.refresh();});
-        addEvent($('tool__bar'),'keypress',function(){locktimer.refresh();});
+        jQuery(jQuery('#dw__editform')).keypress(function(){dw_locktimer.refresh();});
+        jQuery(jQuery('#tool__bar')).keypress(function(){dw_locktimer.refresh();});
 
         // start timer
-        locktimer.reset();
+        dw_locktimer.reset();
     };
 });
 
